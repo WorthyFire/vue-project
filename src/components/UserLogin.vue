@@ -36,42 +36,26 @@ export default {
   },
   methods: {
     loginUser() {
-      // Проверяем валидность введенных данных
-      this.emailError = !this.validateEmail(this.email);
-      this.passwordError = !this.password;
-
-      if (!this.emailError && !this.passwordError) {
-        // Подготавливаем данные для отправки на сервер
-        const userData = {
-          email: this.email,
-          password: this.password
-        };
-
-        // Отправляем запрос на сервер для аутентификации пользователя
-        // В данном случае это просто выводим сообщение в консоль
-        console.log('Login form submitted with data:', userData);
-
-        // Переход на другую страницу (например, на домашнюю страницу) после успешной аутентификации
-        // Здесь необходимо реализовать навигацию с помощью маршрутизатора Vue Router
-        // В данном примере просто очищаем поля формы
-        this.email = '';
-        this.password = '';
+      // Получаем данные пользователя из локального хранилища
+      const savedUserData = localStorage.getItem('userData');
+      if (savedUserData) {
+        const userData = JSON.parse(savedUserData);
+        if (userData.email === this.email && userData.password === this.password) {
+          // Учетные данные верны, пользователь авторизован
+          // Здесь можно также сохранить состояние авторизации в Vuex, если это необходимо
+          this.$router.push('/'); // Перенаправляем пользователя на главную страницу
+        } else {
+          // Учетные данные неверны, выводим сообщение об ошибке
+          this.error = 'Неверные учетные данные';
+        }
       } else {
-        // Выводим сообщение об ошибке ввода данных
-        this.error = 'Пожалуйста, исправьте ошибки в форме входа';
+        // Пользователь с такими учетными данными не найден, выводим сообщение об ошибке
+        this.error = 'Пользователь не найден';
       }
     },
     goBack() {
       // Переходим на главную страницу
-      // Здесь необходимо реализовать навигацию с помощью маршрутизатора Vue Router
-      console.log('Перенаправлен на главный экран');
-
-      // Пример перехода на главную страницу с использованием маршрутизатора Vue Router
       this.$router.push('/');
-    },
-    validateEmail(email) {
-      // Реализовать функцию для проверки валидности email
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
   }
 };

@@ -18,7 +18,7 @@
       <!-- Ссылка на выход из аккаунта -->
       <button @click="logout" class="logout-button">Выход</button>
       <!-- Ссылка на просмотр ранее оформленных заказов -->
-      <router-link to="/orders" class="orders-link">Мои заказы</router-link>
+      <router-link to="/cart" class="orders-link">Корзина</router-link>
     </div>
   </div>
 </template>
