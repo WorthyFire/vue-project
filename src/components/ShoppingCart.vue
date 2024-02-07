@@ -8,8 +8,9 @@
       <div class="cart-item" v-for="(item, index) in cartItems" :key="index">
         <div class="item-info">
           <h3>{{ item.name }}</h3>
-          <p>Цена: {{ item.price }} руб.</p>
+          <p>Цена за шт.: {{ item.price }} руб.</p>
           <p>Количество: {{ item.quantity }}</p>
+          <p>Общая стоимость: {{ item.quantity * item.price }} руб.</p>
         </div>
         <div class="item-controls">
           <button @click="incrementItem(index)">+</button>
@@ -46,8 +47,23 @@ export default {
       this.saveCart();
     },
     checkout() {
-      // Логика оформления заказа
-      // Переход на экран с заказами
+      // Добавление текущего заказа в список оформленных заказов
+      const newOrder = {
+        id: Math.floor(Math.random() * 1000), // Генерация временного ID
+        date: new Date().toLocaleDateString(),
+        total: this.cartItems.reduce((total, item) => total + (item.quantity * item.price), 0),
+        items: this.cartItems.map(item => ({id: item.id, name: item.name, quantity: item.quantity}))
+      };
+      // Получение списка заказов из localStorage
+      let orders = JSON.parse(localStorage.getItem('orders')) || [];
+      // Добавляем новый заказ в список
+      orders.push(newOrder);
+      // Сохраняем обновленный список заказов в localStorage
+      localStorage.setItem('orders', JSON.stringify(orders));
+      // Очистка корзины после оформления заказа
+      this.cartItems = [];
+      this.saveCart();
+      // Переход на страницу с заказами
       this.$router.push('/orders');
     },
     saveCart() {

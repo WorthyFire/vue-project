@@ -31,20 +31,30 @@ export default {
     };
   },
   methods: {
-    loginUser() {
+    async loginUser() {
+      const url = "https://jurapro.bhuser.ru/api-shop";
       // Получаем данные пользователя из локального хранилища
-      const savedUserData = localStorage.getItem('userData');
-      if (savedUserData) {
-        const userData = JSON.parse(savedUserData);
-        if (userData.email === this.email && userData.password === this.password) {
-
-          this.$router.push('/'); // Перенаправляем пользователя на главную страницу
-        } else {
-          this.error = 'Неверные учетные данные';
-        }
-      } else {
-        this.error = 'Пользователь не найден';
-      }
+      // const savedUserData = localStorage.getItem('userData');
+      const response = await fetch(url  + '/login' ,   {
+        method: "POST",
+        body: JSON.stringify({
+          email: this.email,
+          password: this.password
+        })
+      })
+      const result = await response.json();
+      console.log('response: ', result);
+      // if (savedUserData) {
+      //   const userData = JSON.parse(savedUserData);
+      //   if (userData.email === this.email && userData.password === this.password) {
+      //
+      //     this.$router.push('/'); // Перенаправляем пользователя на главную страницу
+      //   } else {
+      //     this.error = 'Неверные учетные данные';
+      //   }
+      // } else {
+      //   this.error = 'Пользователь не найден';
+      // }
     },
     goBack() {
       // Переходим на главную страницу

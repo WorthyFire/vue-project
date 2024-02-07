@@ -24,26 +24,15 @@
 export default {
   data() {
     return {
-      orders: [
-        {
-          id: 1,
-          date: '01.02.2024',
-          total: 2500,
-          items: [
-            {id: 1, name: 'Товар 1', quantity: 2},
-            {id: 2, name: 'Товар 2', quantity: 1}
-          ]
-        },
-        {
-          id: 2,
-          date: '05.02.2024',
-          total: 1800,
-          items: [
-            {id: 3, name: 'Товар 3', quantity: 3}
-          ]
-        }
-      ]
+      orders: []
     };
+  },
+  created() {
+    // Загружаем список заказов из localStorage при создании компонента
+    const savedOrders = localStorage.getItem('orders');
+    if (savedOrders) {
+      this.orders = JSON.parse(savedOrders);
+    }
   },
   methods: {
     goBack() {

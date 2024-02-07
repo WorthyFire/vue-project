@@ -11,6 +11,7 @@
       <button @click="logout" class="logout-button">Выход</button>
       <!-- Кнопка перехода в корзину -->
       <router-link v-if="isLoggedIn" to="/cart" class="cart-button">Корзина</router-link>
+      <router-link v-if="isLoggedIn" to="/orders" class="orders-button">Офомрленные заказы</router-link>
     </div>
     <h1>Каталог товаров</h1>
     <!-- Список товаров из каталога -->
@@ -177,5 +178,8 @@ export default {
 
 .add-to-cart-button:hover {
   background-color: #45a049;
+}
+.orders-button{
+
 }
 </style>
