@@ -2,7 +2,6 @@
   <div class="login-container">
     <h2>Вход в систему</h2>
     <form @submit.prevent="loginUser" class="login-form">
-      <!-- Input fields for login -->
       <div class="form-group">
         <label for="email">Электронная почта пользователя:</label>
         <input type="email" id="email" v-model="email" required :class="{ 'error': emailError }">
@@ -13,12 +12,9 @@
         <input type="password" id="password" v-model="password" required :class="{ 'error': passwordError }">
         <div v-if="passwordError" class="error">Введите пароль</div>
       </div>
-      <!-- Error message -->
       <div v-if="error" class="error">{{ error }}</div>
-      <!-- Login button -->
       <button type="submit" class="login-button">Войти</button>
     </form>
-    <!-- Back button -->
     <button @click="goBack" class="back-button">На главную страницу</button>
   </div>
 </template>
@@ -41,15 +37,12 @@ export default {
       if (savedUserData) {
         const userData = JSON.parse(savedUserData);
         if (userData.email === this.email && userData.password === this.password) {
-          // Учетные данные верны, пользователь авторизован
-          // Здесь можно также сохранить состояние авторизации в Vuex, если это необходимо
+
           this.$router.push('/'); // Перенаправляем пользователя на главную страницу
         } else {
-          // Учетные данные неверны, выводим сообщение об ошибке
           this.error = 'Неверные учетные данные';
         }
       } else {
-        // Пользователь с такими учетными данными не найден, выводим сообщение об ошибке
         this.error = 'Пользователь не найден';
       }
     },

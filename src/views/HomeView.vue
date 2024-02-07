@@ -1,9 +1,15 @@
 <template>
   <div class="home-container">
     <!-- Кнопки регистрации и авторизации -->
-    <div class="auth-buttons">
+    <div class="auth-buttons" v-if="!isLoggedIn">
       <router-link to="/registration" class="auth-button">Регистрация</router-link>
       <router-link to="/login" class="auth-button">Авторизация</router-link>
+    </div>
+    <!-- Никнейм и кнопка выхода -->
+    <div v-else class="user-info">
+      <p>Имя пользователя:{{ username }}</p>
+
+      <button @click="logout" class="logout-button">Выход</button>
     </div>
     <h1>Каталог товаров</h1>
     <!-- Список товаров из каталога -->
@@ -11,14 +17,7 @@
       <h3>{{ product.name }}</h3>
       <p>{{ product.description }}</p>
       <!-- Показывать кнопку "Добавить в корзину" только для авторизованных пользователей-клиентов -->
-      <button v-if="isClient" @click="addToCart(product)" class="add-to-cart-button">Добавить в корзину</button>
-    </div>
-    <!-- Элементы интерфейса в зависимости от роли пользователя -->
-    <div v-if="isLoggedIn" class="user-links">
-      <!-- Ссылка на выход из аккаунта -->
-      <button @click="logout" class="logout-button">Выход</button>
-      <!-- Ссылка на просмотр ранее оформленных заказов -->
-      <router-link to="/cart" class="orders-link">Корзина</router-link>
+      <button v-if="isClient && isLoggedIn" @click="addToCart(product)" class="add-to-cart-button">Добавить в корзину</button>
     </div>
   </div>
 </template>
@@ -34,10 +33,12 @@ export default {
         { id: 2, name: 'Товар 2', description: 'Описание товара 2' },
         { id: 3, name: 'Товар 3', description: 'Описание товара 3' },
       ],
-      // Статус авторизации пользователя (для демонстрации)
+      // Статус авторизации пользователя
       isLoggedIn: false,
       // Роль пользователя (для демонстрации)
       role: 'client', // Может быть 'client', 'admin' и т.д.
+      // Никнейм пользователя
+      username: ''
     };
   },
   computed: {
@@ -51,21 +52,27 @@ export default {
     addToCart(product) {
       console.log('Добавлен товар в корзину:', product);
     },
-    // Выход из аккаунта (для демонстрации)
+    // Выход из аккаунта
     logout() {
       this.isLoggedIn = false;
+      this.username = '';
       console.log('Выход из аккаунта');
+    }
+  },
+  created() {
+    // Проверяем, авторизован ли пользователь
+    const savedUserData = localStorage.getItem('userData');
+    if (savedUserData) {
+      const userData = JSON.parse(savedUserData);
+      this.isLoggedIn = true;
+      this.username = userData.username;
     }
   }
 };
 </script>
 
 <style>
-.home-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
+/* Стили для визуализации */
 .auth-buttons {
   display: flex;
   justify-content: flex-end;
@@ -82,6 +89,25 @@ export default {
   text-decoration: underline;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.logout-button {
+  margin-left: 10px;
+  background-color: #f44336;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.logout-button:hover {
+  background-color: #da190b;
+}
+
 .product {
   border: 1px solid #ccc;
   border-radius: 5px;
@@ -93,8 +119,7 @@ export default {
   margin-top: 0;
 }
 
-.add-to-cart-button,
-.logout-button {
+.add-to-cart-button {
   background-color: #4CAF50;
   color: white;
   padding: 8px 16px;
@@ -103,21 +128,7 @@ export default {
   cursor: pointer;
 }
 
-.add-to-cart-button:hover,
-.logout-button:hover {
+.add-to-cart-button:hover {
   background-color: #45a049;
-}
-
-.orders-link {
-  text-decoration: none;
-  color: #007bff;
-}
-
-.orders-link:hover {
-  text-decoration: underline;
-}
-
-.user-links {
-  margin-top: 20px;
 }
 </style>
