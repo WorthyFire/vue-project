@@ -19,7 +19,7 @@
       </div>
       <button @click="checkout" class="checkout-button">Оформить заказ</button>
     </div>
-    <button @click="goBack" class="back-button">Назад</button>
+    <router-link to="/" class="back-button">Назад</router-link>
   </div>
 </template>
 
@@ -27,33 +27,38 @@
 export default {
   data() {
     return {
-      cartItems: [
-        { id: 1, name: 'Товар 1', price: 100, quantity: 2 },
-        { id: 2, name: 'Товар 2', price: 200, quantity: 1 },
-        { id: 3, name: 'Товар 3', price: 150, quantity: 3 }
-      ]
+      cartItems: [] // Список товаров в корзине
     };
   },
   methods: {
     incrementItem(index) {
       this.cartItems[index].quantity++;
+      this.saveCart();
     },
     decrementItem(index) {
       if (this.cartItems[index].quantity > 1) {
         this.cartItems[index].quantity--;
+        this.saveCart();
       }
     },
     removeItem(index) {
       this.cartItems.splice(index, 1);
+      this.saveCart();
     },
     checkout() {
       // Логика оформления заказа
       // Переход на экран с заказами
       this.$router.push('/orders');
     },
-    goBack() {
-      // Переход на домашний экран
-      this.$router.push('/');
+    saveCart() {
+      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
+    }
+  },
+  created() {
+    // Загружаем корзину из localStorage при создании компонента
+    const savedCartItems = localStorage.getItem('cartItems');
+    if (savedCartItems) {
+      this.cartItems = JSON.parse(savedCartItems);
     }
   }
 };
@@ -96,6 +101,7 @@ export default {
 }
 
 .back-button {
+  display: block; /* Добавлено */
   margin-top: 20px;
   background-color: #f44336;
   color: white;
