@@ -10,15 +10,15 @@
         <p>{{ item.description }}</p>
         <p>Цена: {{ item.price }}</p>
         <div class="quantity-controls">
-          <button @click="increaseQuantity(item)">+</button>
+          <button @click="decreaseQuantity(item)" class="quantity-button">-</button>
           <span>{{ item.quantity }}</span>
-          <button @click="decreaseQuantity(item)">-</button>
+          <button @click="increaseQuantity(item)" class="quantity-button">+</button>
         </div>
-        <button @click="removeFromCart(item)">Удалить из корзины</button>
+        <button @click="removeFromCart(item)" class="remove-button">Удалить из корзины</button>
       </div>
-      <button @click="checkout" v-if="cartItems.length > 0">Оформить заказ</button>
+      <button @click="checkout" v-if="cartItems.length > 0" class="checkout-button">Оформить заказ</button>
     </div>
-    <button @click="goBack">Назад</button>
+    <button @click="goBack" class="back-button">Назад</button>
   </div>
 </template>
 
@@ -106,29 +106,63 @@ export default {
   margin-top: 0;
 }
 
-.quantity-controls button {
+.quantity-controls {
+  display: flex;
+  align-items: center;
+}
+
+.quantity-button {
   background-color: #4CAF50;
   color: white;
   padding: 4px 8px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin: 0 5px;
 }
 
-.quantity-controls button:hover {
+.quantity-button:hover {
   background-color: #45a049;
 }
 
-.button {
+.remove-button {
   background-color: #f44336;
   color: white;
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.button:hover {
+.remove-button:hover {
   background-color: #da190b;
+}
+
+.checkout-button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.checkout-button:hover {
+  background-color: #0056b3;
+}
+
+.back-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.back-button:hover {
+  background-color: #5a6268;
 }
 </style>
