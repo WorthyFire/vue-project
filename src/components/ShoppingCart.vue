@@ -1,26 +1,24 @@
 <template>
-  <div class="shopping-cart">
+  <div class="cart-view">
     <h2>Корзина</h2>
-    <div v-if="cartItems.length === 0" class="empty-cart">
-      Корзина пуста
+    <div v-if="cartItems.length === 0">
+      <p>Ваша корзина пуста.</p>
     </div>
     <div v-else>
-      <div class="cart-item" v-for="(item, index) in cartItems" :key="index">
-        <div class="item-info">
-          <h3>{{ item.name }}</h3>
-          <p>Цена за шт.: {{ item.price }} руб.</p>
-          <p>Количество: {{ item.quantity }}</p>
-          <p>Общая стоимость: {{ item.quantity * item.price }} руб.</p>
+      <div v-for="item in cartItems" :key="item.id" class="cart-item">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description }}</p>
+        <p>Цена: {{ item.price }}</p>
+        <div class="quantity-controls">
+          <button @click="increaseQuantity(item)">+</button>
+          <span>{{ item.quantity }}</span>
+          <button @click="decreaseQuantity(item)">-</button>
         </div>
-        <div class="item-controls">
-          <button @click="incrementItem(index)">+</button>
-          <button @click="decrementItem(index)">-</button>
-          <button @click="removeItem(index)">Удалить</button>
-        </div>
+        <button @click="removeFromCart(item)">Удалить из корзины</button>
       </div>
-      <button @click="checkout" class="checkout-button">Оформить заказ</button>
+      <button @click="checkout" v-if="cartItems.length > 0">Оформить заказ</button>
     </div>
-    <router-link to="/" class="back-button">Назад</router-link>
+    <button @click="goBack">Назад</button>
   </div>
 </template>
 
@@ -28,112 +26,109 @@
 export default {
   data() {
     return {
-      cartItems: [] // Список товаров в корзине
+      cartItems: []
     };
   },
+  created() {
+    this.fetchCartItems();
+  },
   methods: {
-    incrementItem(index) {
-      this.cartItems[index].quantity++;
-      this.saveCart();
-    },
-    decrementItem(index) {
-      if (this.cartItems[index].quantity > 1) {
-        this.cartItems[index].quantity--;
-        this.saveCart();
+    async fetchCartItems() {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('Токен пользователя отсутствует.');
+        return;
+      }
+
+      const url = "https://jurapro.bhuser.ru/api-shop/cart";
+      try {
+        const response = await fetch(url, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          this.cartItems = data.data;
+        } else {
+          console.error("Ошибка получения списка товаров в корзине");
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
       }
     },
-    removeItem(index) {
-      this.cartItems.splice(index, 1);
-      this.saveCart();
+    async removeFromCart(item) {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('Токен пользователя отсутствует.');
+        return;
+      }
+
+      const url = `https://jurapro.bhuser.ru/api-shop/cart/${item.id}`;
+      try {
+        const response = await fetch(url, {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          this.cartItems = this.cartItems.filter(cartItem => cartItem.id !== item.id);
+          console.log("Товар успешно удален из корзины");
+        } else {
+          console.error("Ошибка удаления товара из корзины:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Ошибка удаления товара из корзины:", error);
+      }
     },
-    checkout() {
-      // Добавление текущего заказа в список оформленных заказов
-      const newOrder = {
-        id: Math.floor(Math.random() * 1000), // Генерация временного ID
-        date: new Date().toLocaleDateString(),
-        total: this.cartItems.reduce((total, item) => total + (item.quantity * item.price), 0),
-        items: this.cartItems.map(item => ({id: item.id, name: item.name, quantity: item.quantity}))
-      };
-      // Получение списка заказов из localStorage
-      let orders = JSON.parse(localStorage.getItem('orders')) || [];
-      // Добавляем новый заказ в список
-      orders.push(newOrder);
-      // Сохраняем обновленный список заказов в localStorage
-      localStorage.setItem('orders', JSON.stringify(orders));
-      // Очистка корзины после оформления заказа
-      this.cartItems = [];
-      this.saveCart();
-      // Переход на страницу с заказами
-      this.$router.push('/orders');
-    },
-    saveCart() {
-      localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
-    }
-  },
-  created() {
-    // Загружаем корзину из localStorage при создании компонента
-    const savedCartItems = localStorage.getItem('cartItems');
-    if (savedCartItems) {
-      this.cartItems = JSON.parse(savedCartItems);
+    goBack() {
+      this.$router.push('/');
     }
   }
 };
 </script>
 
 <style scoped>
-.shopping-cart {
+.cart-view {
   max-width: 800px;
   margin: 0 auto;
 }
 
 .cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ccc;
-  padding: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
-.item-info {
-  flex: 1;
+.cart-item h3 {
+  margin-top: 0;
 }
 
-.item-controls button {
-  margin-left: 10px;
-}
-
-.checkout-button {
-  margin-top: 20px;
+.quantity-controls button {
   background-color: #4CAF50;
   color: white;
-  padding: 8px 16px;
+  padding: 4px 8px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.checkout-button:hover {
+.quantity-controls button:hover {
   background-color: #45a049;
 }
 
-.back-button {
-  display: block; /* Добавлено */
-  margin-top: 20px;
+.button {
   background-color: #f44336;
   color: white;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.back-button:hover {
+.button:hover {
   background-color: #da190b;
-}
-
-.empty-cart {
-  margin-top: 20px;
-  font-style: italic;
-  color: #777;
 }
 </style>

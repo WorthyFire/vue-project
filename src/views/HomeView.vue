@@ -1,136 +1,112 @@
 <template>
-  <div class="home-container">
-    <!-- Кнопки регистрации и авторизации -->
-    <div class="auth-buttons" v-if="!isLoggedIn">
-      <router-link to="/registration" class="auth-button">Регистрация</router-link>
-      <router-link to="/login" class="auth-button">Авторизация</router-link>
+  <div class="product-catalog">
+    <h2>Каталог товаров</h2>
+    <div v-if="!isAuthenticated">
+      <router-link to="/login">Войти</router-link> /
+      <router-link to="/registration">Зарегистрироваться</router-link>
     </div>
-    <!-- Никнейм и кнопка выхода -->
-    <div v-else class="user-info">
-      <p>Имя пользователя: {{ username }}</p>
-      <button @click="logout" class="logout-button">Выход</button>
-      <!-- Кнопка перехода в корзину -->
-      <router-link v-if="isLoggedIn" to="/cart" class="cart-button">Корзина</router-link>
-      <router-link v-if="isLoggedIn" to="/orders" class="orders-button">Офомрленные заказы</router-link>
+    <div v-else>
+      <button v-if="isAuthenticated" @click="logout" class="logout-button">Выход</button>
+      <router-link v-if="isAuthenticated" to="/cart">Корзина</router-link>
+      <router-link v-if="isAuthenticated" to="/orders">Оформленные заказы</router-link>
     </div>
-    <h1>Каталог товаров</h1>
-    <!-- Список товаров из каталога -->
-    <div class="product" v-for="product in products" :key="product.id">
-      <div class="product-info">
+    <div class="product-list">
+      <div v-for="product in products" :key="product.id" class="product-item">
         <h3>{{ product.name }}</h3>
         <p>{{ product.description }}</p>
-        <img :src="product.image" alt="Product" class="product-image">
-        <p class="product-price">Цена: {{ product.price }} руб.</p>
+        <p>Цена: {{ product.price }}</p>
+        <button v-if="isAuthenticated" @click="addToCart(product)">Добавить в корзину</button>
       </div>
-      <!-- Показывать кнопку "Добавить в корзину" только для авторизованных пользователей-клиентов -->
-      <button v-if="isClient && isLoggedIn" @click="addToCart(product)" class="add-to-cart-button">Добавить в корзину</button>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'HomeView',
   data() {
     return {
-      // Список товаров из каталога
-      products: [
-        {id: 1, name: 'Пирожок', description: 'Вкусный пирожок', image: '', price: 100},
-        {id: 2, name: 'Пицца', description: 'Вкусная пицца', image: '', price: 200},
-        {id: 3, name: 'Суши', description: 'Вкусные суши', image: '', price: 300},
-      ],
-      // Статус авторизации пользователя
-      isLoggedIn: false,
-      // Роль пользователя (для демонстрации)
-      role: 'client', // Может быть 'client', 'admin' и т.д.
-      // Никнейм пользователя
-      username: ''
+      products: [],
+      isClient: false,
+      cartItems: [] // список товаров в корзине
     };
   },
-  computed: {
-    // Проверка роли пользователя на клиента
-    isClient() {
-      return this.role === 'client';
-    }
+  created() {
+    this.fetchProducts();
   },
   methods: {
-    // Добавление товара в корзину (для демонстрации)
-    addToCart(product) {
-      // Создаем копию товара для корзины
-      const cartItem = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1 // При добавлении в корзину количество товара устанавливаем равным 1
-      };
+    async fetchProducts() {
+      const url = "https://jurapro.bhuser.ru/api-shop/products";
 
-      // Загружаем корзину из localStorage
-      let cartItems = localStorage.getItem('cartItems');
-      cartItems = cartItems ? JSON.parse(cartItems) : [];
-
-      // Проверяем, есть ли уже такой товар в корзине
-      const existingItemIndex = cartItems.findIndex(item => item.id === cartItem.id);
-
-      if (existingItemIndex !== -1) {
-        // Если товар уже есть в корзине, увеличиваем его количество
-        cartItems[existingItemIndex].quantity++;
-      } else {
-        // Иначе добавляем новый товар в корзину
-        cartItems.push(cartItem);
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          this.products = data.data;
+        } else {
+          console.error("Ошибка получения списка товаров");
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки данных:", error);
       }
-
-      // Сохраняем корзину в localStorage
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-      console.log('Добавлен товар в корзину:', cartItem);
     },
-    // Выход из аккаунта
+    async addToCart(product) {
+      const productId = product.id;
+      const url = `https://jurapro.bhuser.ru/api-shop/cart/${productId}`;
+      const token = localStorage.getItem('userToken');
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const existingItemIndex = this.cartItems.findIndex(item => item.id === product.id);
+          if (existingItemIndex !== -1 && this.isSameProduct(this.cartItems[existingItemIndex], product)) {
+            this.cartItems[existingItemIndex].quantity++;
+          } else {
+            // Если товара нет в корзине или их характеристики не совпадают, добавляем его
+            this.cartItems.push({...product, quantity: 1});
+          }
+          const data = await response.json();
+          console.log(data.data.message);
+        } else {
+          console.error("Ошибка добавления товара в корзину:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Ошибка добавления товара в корзину:", error);
+      }
+    },
+    isSameProduct(item1, item2) {
+      // Функция для проверки идентичности товаров
+      return item1.id === item2.id && item1.name === item2.name && item1.description === item2.description && item1.price === item2.price;
+    },
     logout() {
-      this.isLoggedIn = false;
-      this.username = '';
-      console.log('Выход из аккаунта');
+      // Удаление токена аутентификации из localStorage или другого места хранения
+      localStorage.removeItem('userToken');
+      this.$router.push('/login');
     }
   },
-  created() {
-    // Проверяем, авторизован ли пользователь
-    const savedUserData = localStorage.getItem('userData');
-    if (savedUserData) {
-      const userData = JSON.parse(savedUserData);
-      this.isLoggedIn = true;
-      this.username = userData.username;
+  computed: {
+    isAuthenticated() {
+      return !!localStorage.getItem('userToken');
     }
   }
 };
 </script>
 
 <style scoped>
-/* Стили для визуализации */
-.auth-buttons {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 20px;
-}
-
-.auth-button {
-  margin-left: 10px;
-  text-decoration: none;
-  color: #007bff;
-}
-
-.auth-button:hover {
-  text-decoration: underline;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
+.product-catalog {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .logout-button {
-  margin-left: 10px;
   background-color: #f44336;
   color: white;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -140,34 +116,22 @@ export default {
   background-color: #da190b;
 }
 
-.product {
+.product-list {
+  margin-top: 20px;
+}
+
+.product-item {
   border: 1px solid #ccc;
-  border-radius: 5px;
+  border-radius: 4px;
   padding: 10px;
-  margin-bottom: 15px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin-bottom: 10px;
 }
 
-.product-info {
-  flex: 1;
-}
-
-.product h3 {
+.product-item h3 {
   margin-top: 0;
 }
 
-.product-image {
-  max-width: 100px;
-  max-height: 100px;
-  margin-right: 20px;
-}
-
-.product-price {
-  font-weight: bold;
-}
-.add-to-cart-button {
+.product-item button {
   background-color: #4CAF50;
   color: white;
   padding: 8px 16px;
@@ -176,10 +140,7 @@ export default {
   cursor: pointer;
 }
 
-.add-to-cart-button:hover {
+.product-item button:hover {
   background-color: #45a049;
-}
-.orders-button{
-
 }
 </style>

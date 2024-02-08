@@ -1,30 +1,22 @@
 <template>
   <div class="registration-container">
-    <h2>Регистрация</h2>
+    <h2>Регистрация пользователя</h2>
     <form @submit.prevent="registerUser" class="registration-form">
-      <!-- Input fields for registration -->
       <div class="form-group">
-        <label for="username">Никнейм пользователя:</label>
-        <input type="text" id="username" v-model="username" required>
+        <label for="fio">ФИО:</label>
+        <input type="text" id="fio" v-model="fio" required>
       </div>
       <div class="form-group">
-        <label for="email">Электронная почта пользователя:</label>
+        <label for="email">Электронная почта:</label>
         <input type="email" id="email" v-model="email" required>
       </div>
       <div class="form-group">
         <label for="password">Пароль:</label>
         <input type="password" id="password" v-model="password" required>
       </div>
-      <div class="form-group">
-        <label for="confirmPassword">Повторите пароль:</label>
-        <input type="password" id="confirmPassword" v-model="confirmPassword" required>
-      </div>
-      <!-- Error messages -->
       <div v-if="error" class="error">{{ error }}</div>
-      <!-- Registration button -->
-      <button type="submit" class="registration-button">Регистрация</button>
+      <button type="submit" class="register-button">Зарегистрироваться</button>
     </form>
-    <!-- Back button -->
     <button @click="goBack" class="back-button">На главную страницу</button>
   </div>
 </template>
@@ -33,61 +25,45 @@
 export default {
   data() {
     return {
-      username: '',
+      fio: '',
       email: '',
       password: '',
-      confirmPassword: '',
       error: ''
     };
   },
   methods: {
-    registerUser() {
-      // Проверяем, есть ли пользователь с таким же никнеймом или почтой уже зарегистрирован
-      const savedUserData = localStorage.getItem('userData');
-      if (savedUserData) {
-        const userData = JSON.parse(savedUserData);
-        if (userData.username === this.username) {
-          // Если пользователь с таким же никнеймом уже зарегистрирован, выводим сообщение об ошибке
-          this.error = 'Пользователь с таким никнеймом уже зарегистрирован';
-          return; // Прерываем выполнение метода, чтобы избежать сохранения нового пользователя
-        }
-        if (userData.email === this.email) {
-          // Если пользователь с такой же почтой уже зарегистрирован, выводим сообщение об ошибке
-          this.error = 'Пользователь с такой почтой уже зарегистрирован';
-          return; // Прерываем выполнение метода, чтобы избежать сохранения нового пользователя
-        }
+    async registerUser() {
+      const url = "https://jurapro.bhuser.ru/api-shop/signup";
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          fio: this.fio,
+          email: this.email,
+          password: this.password
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('userToken', data.data.user_token);
+        this.$router.push('/'); // Перенаправляем пользователя на главную страницу
+      } else {
+        this.error = "Ошибка регистрации пользователя";
       }
-
-      // Сохраняем данные нового пользователя в локальное хранилище
-      const userData = {
-        username: this.username,
-        email: this.email,
-        password: this.password
-      };
-      localStorage.setItem('userData', JSON.stringify(userData));
-
-      // Очищаем поля формы после регистрации
-      this.username = '';
-      this.email = '';
-      this.password = '';
-      this.confirmPassword = '';
-
-      // После успешной регистрации перенаправляем пользователя на страницу авторизации
-      this.$router.push('/login');
     },
     goBack() {
-      // Переходим на главную страницу
-      // Здесь необходимо реализовать навигацию с помощью маршрутизатора Vue Router
-      console.log('Перенаправлен на главный экран');
-
-      // Пример перехода на главную страницу с использованием маршрутизатора Vue Router
+      // Переход на главную страницу
       this.$router.push('/');
-    },
+    }
   }
 };
 </script>
 
-<style scoped>
+<style>
 .registration-container {
   max-width: 400px;
   margin: 0 auto;
@@ -118,31 +94,30 @@ input {
   color: red;
 }
 
-.registration-button,
-.back-button {
-  display: block;
-  width: 100%;
+.register-button {
+  background-color: #4CAF50;
+  color: white;
   padding: 10px 20px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.registration-button {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.registration-button:hover {
+.register-button:hover {
   background-color: #45a049;
 }
 
 .back-button {
   background-color: #f44336;
   color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .back-button:hover {
   background-color: #da190b;
 }
+
 </style>
