@@ -18,6 +18,10 @@
         <button v-if="isAuthenticated" @click="addToCart(product)">Добавить в корзину</button>
       </div>
     </div>
+    <!-- Всплывающее окно -->
+    <div class="popup" v-if="showPopup">
+      Товар добавлен в корзину
+    </div>
   </div>
 </template>
 
@@ -27,7 +31,8 @@ export default {
     return {
       products: [],
       isClient: false,
-      cartItems: [] // список товаров в корзине
+      cartItems: [], // список товаров в корзине
+      showPopup: false // переменная для отображения всплывающего окна
     };
   },
   created() {
@@ -72,6 +77,13 @@ export default {
           }
           const data = await response.json();
           console.log(data.data.message);
+
+          // Показываем всплывающее окно
+          this.showPopup = true;
+          // Устанавливаем таймер для скрытия всплывающего окна через 3 секунды
+          setTimeout(() => {
+            this.showPopup = false;
+          }, 3000);
         } else {
           console.error("Ошибка добавления товара в корзину:", response.statusText);
         }
@@ -143,4 +155,18 @@ export default {
 .product-item button:hover {
   background-color: #45a049;
 }
+
+/* Стили для всплывающего окна */
+.popup {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 999;
+}
+
 </style>

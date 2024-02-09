@@ -9,11 +9,6 @@
         <h3>{{ item.name }}</h3>
         <p>{{ item.description }}</p>
         <p>Цена: {{ item.price }}</p>
-        <div class="quantity-controls">
-          <button @click="decreaseQuantity(item)" class="quantity-button">-</button>
-          <span>{{ item.quantity }}</span>
-          <button @click="increaseQuantity(item)" class="quantity-button">+</button>
-        </div>
         <button @click="removeFromCart(item)" class="remove-button">Удалить из корзины</button>
       </div>
       <button @click="checkout" v-if="cartItems.length > 0" class="checkout-button">Оформить заказ</button>
@@ -80,6 +75,72 @@ export default {
         }
       } catch (error) {
         console.error("Ошибка удаления товара из корзины:", error);
+      }
+    },
+    async increaseQuantity(item) {
+      item.quantity++;
+      await this.updateCartItem(item);
+    },
+    async decreaseQuantity(item) {
+      if (item.quantity > 1) {
+        item.quantity--;
+        await this.updateCartItem(item);
+      }
+    },
+    async updateCartItem(item) {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('Токен пользователя отсутствует.');
+        return;
+      }
+
+      const url = `https://jurapro.bhuser.ru/api-shop/cart/${item.id}`;
+      try {
+        const response = await fetch(url, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({quantity: item.quantity})
+        });
+        if (!response.ok) {
+          console.error("Ошибка обновления товара в корзине:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Ошибка обновления товара в корзине:", error);
+      }
+    },
+    async checkout() {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        console.error('Токен пользователя отсутствует.');
+        return;
+      }
+
+      const url = "https://jurapro.bhuser.ru/api-shop/order";
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data.data.message);
+
+          // Перенаправление на страницу оформленных заказов
+          this.$router.push('/orders');
+        } else if (response.status === 422) {
+          const errorData = await response.json();
+          console.error("Ошибка оформления заказа:", errorData.error.message);
+        } else {
+          console.error("Ошибка оформления заказа:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Ошибка оформления заказа:", error);
       }
     },
     goBack() {
